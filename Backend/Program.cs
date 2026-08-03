@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<AquaBlend.Services.ScenarioService>();
+builder.Services.AddScoped<AquaBlend.Services.WaterSourceService>();
 builder.Services.AddDbContext<AquaBlendDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
