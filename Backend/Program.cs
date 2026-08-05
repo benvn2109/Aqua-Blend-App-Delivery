@@ -7,8 +7,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<AquaBlend.Services.ScenarioService>();
+var useInMemoryDatabase = builder.Environment.IsEnvironment("Testing");
+var inMemoryDatabaseName =
+    builder.Configuration.GetValue<string>("InMemoryDatabaseName")
+    ?? "AquaBlendTestDb";
+
 builder.Services.AddDbContext<AquaBlendDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (useInMemoryDatabase)
+    {
+        options.UseInMemoryDatabase(inMemoryDatabaseName);
+    }
+    else
+    {
+        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
 
 var app = builder.Build();
 
@@ -16,7 +30,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AquaBlendDbContext>();
-    db.Database.Migrate();
+
+    if (db.Database.IsRelational())
+    {
+        db.Database.Migrate();
+    }
+    else
+    {
+        db.Database.EnsureCreated();
+    }
+
     SeedData.Initialize(db);
 }
 
@@ -43,3 +66,5 @@ app.MapGet("/api/health", () =>
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
