@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using AquaBlend.Api.Authorization;
 using AquaBlend.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,16 +24,42 @@ builder.Services.AddDbContext<AquaBlendDbContext>(options =>
     }
     else
     {
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString("DefaultConnection"));
     }
+});
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        AppPolicies.CanView,
+        policy => policy.RequireRole(
+            AppRoles.Admin,
+            AppRoles.Analyst,
+            AppRoles.Viewer));
+
+    options.AddPolicy(
+        AppPolicies.CanAnalyse,
+        policy => policy.RequireRole(
+            AppRoles.Admin,
+            AppRoles.Analyst));
+
+    options.AddPolicy(
+        AppPolicies.CanAdminister,
+        policy => policy.RequireRole(AppRoles.Admin));
 });
 
 var app = builder.Build();
 
-// Apply migrations and seed data on startup
+// Apply migrations and seed data on startup.
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AquaBlendDbContext>();
+    var db = scope.ServiceProvider
+        .GetRequiredService<AquaBlendDbContext>();
 
     if (db.Database.IsRelational())
     {
@@ -52,8 +80,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
-// AquaBlend health-check endpoint
+// AquaBlend health-check endpoint.
 app.MapGet("/api/health", () =>
 {
     return Results.Ok(new
