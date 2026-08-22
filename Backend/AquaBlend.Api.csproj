@@ -21,4 +21,10 @@
     <Compile Remove="AquaBlend.Tests/**/*.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Data\SeedData\sample_optimisation_result.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
