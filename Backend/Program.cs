@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<AquaBlend.Services.ScenarioService>();
+builder.Services.AddScoped<AquaBlend.Services.WaterSourceService>();
+
 var useInMemoryDatabase = builder.Environment.IsEnvironment("Testing");
 var inMemoryDatabaseName =
     builder.Configuration.GetValue<string>("InMemoryDatabaseName")
