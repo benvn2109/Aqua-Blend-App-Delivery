@@ -13,4 +13,7 @@ public sealed class ChangesResponseDto
 
     public IReadOnlyList<Scenario> Scenarios { get; init; }
         = Array.Empty<Scenario>();
+
+    public IReadOnlyList<OptimisationResult> OptimisationResults { get; init; }
+        = Array.Empty<OptimisationResult>();
 }

@@ -67,12 +67,20 @@ public sealed class ChangesController : ControllerBase
                 (s.UpdatedAt.HasValue && s.UpdatedAt.Value > sinceUtc))
             .ToListAsync(cancellationToken);
 
+        var optimisationResults = await _context.OptimisationResults
+            .AsNoTracking()
+            .Where(r =>
+                r.CreatedAt > sinceUtc ||
+                (r.UpdatedAt.HasValue && r.UpdatedAt.Value > sinceUtc))
+            .ToListAsync(cancellationToken);
+
         return Ok(new ChangesResponseDto
         {
             RequestedSince = sinceUtc,
             ServerTimestamp = serverTimestamp,
             WaterSources = waterSources,
-            Scenarios = scenarios
+            Scenarios = scenarios,
+            OptimisationResults = optimisationResults
         });
     }
 }
