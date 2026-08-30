@@ -1,3 +1,5 @@
+using AquaBlend.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using AquaBlend.DTOs.Scenarios;
 using AquaBlend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +18,7 @@ namespace AquaBlend.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = AppPolicies.CanView)]
         public async Task<ActionResult<IEnumerable<ScenarioResponseDto>>> GetAll()
         {
             var scenarios = await _scenarioService.GetAllAsync();
@@ -23,6 +26,7 @@ namespace AquaBlend.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Policy = AppPolicies.CanView)]
         public async Task<ActionResult<ScenarioResponseDto>> GetById(int id)
         {
             var scenario = await _scenarioService.GetByIdAsync(id);
@@ -34,6 +38,7 @@ namespace AquaBlend.Controllers
         }
 
         [HttpPost]
+        [Authorize(Policy = AppPolicies.CanAnalyse)]
         public async Task<ActionResult<ScenarioResponseDto>> Create(CreateScenarioDto dto)
         {
             var created = await _scenarioService.CreateAsync(dto);

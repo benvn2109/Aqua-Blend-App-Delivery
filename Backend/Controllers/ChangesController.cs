@@ -1,3 +1,5 @@
+using AquaBlend.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using AquaBlend.Data;
 using AquaBlend.DTOs;
@@ -18,6 +20,7 @@ public sealed class ChangesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<ChangesResponseDto>> GetChanges(
         [FromQuery] string? since,
         CancellationToken cancellationToken)
