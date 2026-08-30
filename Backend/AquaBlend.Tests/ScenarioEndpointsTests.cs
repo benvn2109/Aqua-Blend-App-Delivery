@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.TestHost;
 using System.Net;
 using System.Net.Http.Json;
 using AquaBlend.Data;
@@ -24,6 +26,18 @@ public class AquaBlendApiFactory : WebApplicationFactory<Program>
                 ["InMemoryDatabaseName"] = Guid.NewGuid().ToString(),
             });
         });
+        builder.ConfigureTestServices(services =>
+{
+    services
+        .AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+            options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+        })
+        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+            TestAuthHandler.SchemeName,
+            options => { });
+});
     }
 }
 
