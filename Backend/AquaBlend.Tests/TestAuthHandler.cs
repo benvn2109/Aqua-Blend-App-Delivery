@@ -19,18 +19,33 @@ internal sealed class TestAuthHandler : AuthenticationHandler<AuthenticationSche
     }
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+{
+    if (Request.Headers.TryGetValue("X-Test-Anonymous", out var anonymous) &&
+        string.Equals(
+            anonymous.ToString(),
+            "true",
+            StringComparison.OrdinalIgnoreCase))
     {
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, "integration-test-user"),
-            new Claim(ClaimTypes.Name, "Integration Test Admin"),
-            new Claim(ClaimTypes.Role, "Admin")
-        };
+        return Task.FromResult(AuthenticateResult.NoResult());
+    }
 
-        var identity = new ClaimsIdentity(claims, SchemeName);
-        var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, SchemeName);
+    var role =
+        Request.Headers.TryGetValue("X-Test-Role", out var requestedRole) &&
+        !string.IsNullOrWhiteSpace(requestedRole.ToString())
+            ? requestedRole.ToString()
+            : "Admin";
 
-        return Task.FromResult(AuthenticateResult.Success(ticket));
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, "integration-test-user"),
+        new Claim(ClaimTypes.Name, "Integration Test User"),
+        new Claim(ClaimTypes.Role, role)
+    };
+
+    var identity = new ClaimsIdentity(claims, SchemeName);
+    var principal = new ClaimsPrincipal(identity);
+    var ticket = new AuthenticationTicket(principal, SchemeName);
+
+    return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
