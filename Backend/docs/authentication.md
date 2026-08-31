@@ -1,36 +1,24 @@
 # AquaBlend Authentication and Authorisation
 
-## Sprint 1 scope
+AquaBlend uses JWT Bearer authentication with role-based authorisation.
 
-AquaBlend uses JWT Bearer authentication for the Sprint 1 proof
-of concept. This implementation validates development JWTs and
-applies role-based authorisation policies.
+## Sprint 1
 
-User registration, login, password storage, refresh tokens and
-production account management are outside the Sprint 1 scope.
+### Scope
 
-## JWT validation
+Sprint 1 introduced the JWT Bearer authentication proof of concept. It included:
 
-The API validates:
+- JWT signature, issuer, audience and expiry validation
+- Admin, Analyst and Viewer roles
+- CanView, CanAnalyse and CanAdminister policies
+- Protected `GET /api/auth/me` endpoint
+- Secure development keys using .NET User Secrets
+- Initial verification of 401, 403 and 200 responses
 
-- Token signature
-- Issuer
-- Audience
-- Token expiry
-- Role claims
+User registration, password storage, refresh tokens and production account
+management were outside the Sprint 1 scope.
 
-The development signing key is stored using .NET User Secrets and
-is not committed to Git.
-
-## Roles
-
-The initial application roles are:
-
-- Admin
-- Analyst
-- Viewer
-
-## Policies
+### Roles and policies
 
 | Policy | Permitted roles |
 |---|---|
@@ -38,53 +26,69 @@ The initial application roles are:
 | CanAnalyse | Admin, Analyst |
 | CanAdminister | Admin |
 
-## Protected endpoint
+### Sprint 1 protected endpoint
 
-`GET /api/auth/me` is protected by the `CanView` policy.
+| Endpoint | Policy |
+|---|---|
+| GET `/api/auth/me` | CanView |
 
-A successful request returns the authenticated user's identifier,
-username and roles.
+A successful request returns the authenticated user's identifier, username and
+roles.
 
-## Generate a development token
+## Sprint 2
 
-From the folder containing `AquaBlend.Api.csproj`, generate an Admin
-token:
+### Scope
 
-```bash
-dotnet user-jwts create \
-  --name admin-user \
-  --role Admin \
-  --audience AquaBlend.Api \
-  --issuer dotnet-user-jwts \
-  --valid-for 1h
+Sprint 2 applies the existing policies to the agreed backend endpoints. It also
+documents client JWT usage and verifies unauthorised and forbidden responses
+using automated integration tests.
+
+### Sprint 2 protected endpoints
+
+| Endpoint | Policy |
+|---|---|
+| GET `/api/water-sources` | CanView |
+| GET `/api/water-sources/{id}` | CanView |
+| POST `/api/water-sources` | CanAdminister |
+| PUT `/api/water-sources/{id}` | CanAdminister |
+| DELETE `/api/water-sources/{id}` | CanAdminister |
+| GET `/api/changes` | CanView |
+| GET `/api/scenarios` | CanView |
+| GET `/api/scenarios/{id}` | CanView |
+| POST `/api/scenarios` | CanAnalyse |
+
+The Results controller is not currently available. Its POST endpoint must use
+the CanAnalyse policy when the controller is added.
+
+The required policies for Scenario PUT and DELETE endpoints are awaiting team
+confirmation.
+
+### Sending a JWT from the frontend
+
+The client must send the JWT in the HTTP Authorization header:
+
+```http
+Authorization: Bearer <token>
 ```
 
-Generate a token without an authorised role for the forbidden test:
+JavaScript example:
 
-```bash
-dotnet user-jwts create \
-  --name guest-user \
-  --role Guest \
-  --audience AquaBlend.Api \
-  --issuer dotnet-user-jwts \
-  --valid-for 1h
+```javascript
+const response = await fetch("/api/scenarios", {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+});
 ```
 
-Generated tokens and signing keys are local development credentials.
-They must not be committed, included in screenshots, or shared publicly.
+The word `Bearer`, followed by one space and the token, is required. Tokens
+must not be placed in URLs, logged or committed to Git.
+### Manual Postman verification
 
-## Test results
-
-| Test | Expected result | Result |
+| Request | Expected result | Result |
 |---|---|---|
-| No token | 401 Unauthorized | Passed |
-| Valid Guest token | 403 Forbidden | Passed |
-| Valid Admin token | 200 OK | Passed |
-
-## Secret management
-
-The development signing key is managed through .NET User Secrets.
-The local PostgreSQL connection string is also stored through User Secrets.
-
-Production deployments must use environment variables or an approved
-secret-management service.
+| GET `/api/scenarios` without a token | 401 Unauthorized | Passed |
+| POST `/api/scenarios` with a Viewer token | 403 Forbidden | Passed |
+| GET `/api/auth/me` with an Admin token | 200 OK | Passed |
+| PUT `/api/scenarios/{id}` | CanAnalyse |
+| DELETE `/api/scenarios/{id}` | CanAdminister |
