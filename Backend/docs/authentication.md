@@ -83,3 +83,10 @@ const response = await fetch("/api/scenarios", {
 
 The word `Bearer`, followed by one space and the token, is required. Tokens
 must not be placed in URLs, logged or committed to Git.
+### Manual Postman verification
+
+| Request | Expected result | Result |
+|---|---|---|
+| GET `/api/scenarios` without a token | 401 Unauthorized | Passed |
+| POST `/api/scenarios` with a Viewer token | 403 Forbidden | Passed |
+| GET `/api/auth/me` with an Admin token | 200 OK | Passed |
