@@ -1,3 +1,4 @@
+using AquaBlend.DTOs.Changes;
 using AquaBlend.Entities;
 
 namespace AquaBlend.DTOs;
@@ -14,6 +15,6 @@ public sealed class ChangesResponseDto
     public IReadOnlyList<Scenario> Scenarios { get; init; }
         = Array.Empty<Scenario>();
 
-    public IReadOnlyList<OptimisationResult> OptimisationResults { get; init; }
-        = Array.Empty<OptimisationResult>();
+    public IReadOnlyList<OptimisationResultSummaryDto> OptimisationResults { get; init; }
+        = Array.Empty<OptimisationResultSummaryDto>();
 }

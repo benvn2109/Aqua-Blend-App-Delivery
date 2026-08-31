@@ -34,7 +34,22 @@ The endpoint returns:
 - A server-generated UTC timestamp as `serverTimestamp`.
 - Water Sources created or updated after the supplied timestamp.
 - Scenarios created or updated after the supplied timestamp.
-- Optimisation Results created or updated after the supplied timestamp.
+- Optimisation Result summaries for results created or updated after the supplied timestamp.
+
+Optimisation Results are returned as lightweight summaries. The polling response includes:
+
+- `id`
+- `scenarioId`
+- `status`
+- `solvedAt`
+- `receivedAt`
+- `contractVersion`
+- `totalCost`
+- `currency`
+- `createdAt`
+- `updatedAt`
+
+The full `resultJson` is not returned by the changes endpoint. The purpose of the endpoint is to notify the frontend that an Optimisation Result has changed rather than resend the complete optimisation result during every poll.
 
 ### Example Response
 
@@ -44,7 +59,20 @@ The endpoint returns:
   "serverTimestamp": "2026-08-25T03:00:30Z",
   "waterSources": [],
   "scenarios": [],
-  "optimisationResults": []
+  "optimisationResults": [
+    {
+      "id": 1,
+      "scenarioId": 3,
+      "status": "OPTIMAL",
+      "solvedAt": "2026-08-25T02:58:00Z",
+      "receivedAt": "2026-08-25T02:58:05Z",
+      "contractVersion": "1.0",
+      "totalCost": 12500.00,
+      "currency": "AUD",
+      "createdAt": "2026-08-25T02:58:05Z",
+      "updatedAt": null
+    }
+  ]
 }
 ```
 
@@ -98,9 +126,10 @@ GET /api/changes?since={lastServerTimestamp}
 
 4. Process any returned Water Sources.
 5. Process any returned Scenarios.
-6. Process any returned Optimisation Results.
-7. Store the new `serverTimestamp`.
-8. Repeat the process.
+6. Process any returned Optimisation Result summaries.
+7. If the frontend requires the full optimisation result, retrieve it using the appropriate Optimisation Result endpoint.
+8. Store the new `serverTimestamp`.
+9. Repeat the process.
 
 Using the server-generated timestamp for the next request avoids relying on the frontend device's local clock.
 
@@ -161,3 +190,7 @@ Skipped: 0
 - The endpoint returns only records created or updated after the supplied `since` timestamp.
 - `serverTimestamp` should be used by the frontend as the `since` value for the next successful polling request.
 - Optimisation Results were added to automatic updates during Sprint 2.
+- Optimisation Results are projected into `OptimisationResultSummaryDto` before being returned.
+- `resultJson` is intentionally excluded from the automatic updates response.
+- The Optimisation Result `Scenario` navigation property is not included in the polling response.
+- Water Sources and Scenarios remain unchanged from the Sprint 1 implementation.

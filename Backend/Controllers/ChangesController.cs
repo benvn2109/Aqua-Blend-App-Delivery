@@ -1,6 +1,7 @@
 using System.Globalization;
 using AquaBlend.Data;
 using AquaBlend.DTOs;
+using AquaBlend.DTOs.Changes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,6 +73,19 @@ public sealed class ChangesController : ControllerBase
             .Where(r =>
                 r.CreatedAt > sinceUtc ||
                 (r.UpdatedAt.HasValue && r.UpdatedAt.Value > sinceUtc))
+            .Select(r => new OptimisationResultSummaryDto
+            {
+                Id = r.Id,
+                ScenarioId = r.ScenarioId,
+                Status = r.Status,
+                SolvedAt = r.SolvedAt,
+                ReceivedAt = r.ReceivedAt,
+                ContractVersion = r.ContractVersion,
+                TotalCost = r.TotalCost,
+                Currency = r.Currency,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
+            })
             .ToListAsync(cancellationToken);
 
         return Ok(new ChangesResponseDto
