@@ -50,6 +50,7 @@ namespace AquaBlend.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Policy = AppPolicies.CanAnalyse)]
         public async Task<IActionResult> Update(int id, UpdateScenarioDto dto)
         {
             var updated = await _scenarioService.UpdateAsync(id, dto);
@@ -61,6 +62,7 @@ namespace AquaBlend.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Policy = AppPolicies.CanAdminister)]
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _scenarioService.DeleteAsync(id);

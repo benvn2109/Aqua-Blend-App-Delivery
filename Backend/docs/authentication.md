@@ -90,3 +90,5 @@ must not be placed in URLs, logged or committed to Git.
 | GET `/api/scenarios` without a token | 401 Unauthorized | Passed |
 | POST `/api/scenarios` with a Viewer token | 403 Forbidden | Passed |
 | GET `/api/auth/me` with an Admin token | 200 OK | Passed |
+| PUT `/api/scenarios/{id}` | CanAnalyse |
+| DELETE `/api/scenarios/{id}` | CanAdminister |
