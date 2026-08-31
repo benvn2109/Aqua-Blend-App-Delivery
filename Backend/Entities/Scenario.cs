@@ -7,7 +7,7 @@ public class Scenario
     public string Description { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
-    public string ExternalId { get; set; } = string.Empty;
+    public string? ExternalId { get; set; }
 
     public ICollection<OptimisationResult> OptimisationResults { get; set; } = new List<OptimisationResult>();
 }
