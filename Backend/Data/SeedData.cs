@@ -21,7 +21,7 @@ public static class SeedData
         {
             // Reuse an existing scenario row with a blank ExternalId if one exists
             // (e.g. from earlier Sprint 1 seeding), otherwise create a fresh one.
-            scenario = context.Scenarios.FirstOrDefault(s => s.ExternalId == string.Empty);
+            scenario = context.Scenarios.FirstOrDefault(s => s.ExternalId == null);
 
             if (scenario is not null)
             {
