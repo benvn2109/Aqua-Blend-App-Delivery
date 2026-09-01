@@ -3,11 +3,17 @@ name: Backend CI
 on:
   push:
     branches:
+      - master
       - backend/sprint-1
+      - "sprint2/**"
+      - "sprint3/**"
       - "feature/**"
   pull_request:
     branches:
+      - master
       - backend/sprint-1
+      - "sprint2/**"
+      - "sprint3/**"
 
 jobs:
   build-and-test:
@@ -25,6 +31,14 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "9.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('Backend/**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Restore
         run: dotnet restore AquaBlend.sln

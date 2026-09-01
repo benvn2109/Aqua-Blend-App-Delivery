@@ -1,3 +1,5 @@
+using AquaBlend.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using AquaBlend.DTOs.WaterSources;
 using AquaBlend.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -16,12 +18,14 @@ public class WaterSourcesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<IEnumerable<WaterSourceResponseDto>>> GetAll()
     {
         return Ok(await _waterSourceService.GetAllAsync());
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<WaterSourceResponseDto>> GetById(int id)
     {
         var waterSource = await _waterSourceService.GetByIdAsync(id);
@@ -29,6 +33,7 @@ public class WaterSourcesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AppPolicies.CanAdminister)]
     public async Task<ActionResult<WaterSourceResponseDto>> Create(CreateWaterSourceDto dto)
     {
         var created = await _waterSourceService.CreateAsync(dto);
@@ -36,12 +41,14 @@ public class WaterSourcesController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = AppPolicies.CanAdminister)]
     public async Task<IActionResult> Update(int id, UpdateWaterSourceDto dto)
     {
         return await _waterSourceService.UpdateAsync(id, dto) ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Policy = AppPolicies.CanAdminister)]
     public async Task<IActionResult> Delete(int id)
     {
         return await _waterSourceService.DeleteAsync(id) ? NoContent() : NotFound();
