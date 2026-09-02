@@ -2,7 +2,7 @@ namespace AquaBlend.DTOs.OptimisationResults;
 
 public class CreateOptimisationResultDto
 {
-    public string ScenarioId { get; set; } = string.Empty;
+    public string ScenarioExternalId  { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public DateTime? SolvedAt { get; set; }
     public DateTime? ReceivedAt { get; set; }

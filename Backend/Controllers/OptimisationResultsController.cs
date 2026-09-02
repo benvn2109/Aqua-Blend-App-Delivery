@@ -1,6 +1,8 @@
 using AquaBlend.DTOs.OptimisationResults;
 using AquaBlend.Services;
 using Microsoft.AspNetCore.Mvc;
+using AquaBlend.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AquaBlend.Controllers;
 
@@ -17,6 +19,7 @@ public class OptimisationResultsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<IEnumerable<OptimisationResultSummaryDto>>> GetAll()
     {
         var results = await _optimisationResultService.GetAllAsync();
@@ -24,6 +27,7 @@ public class OptimisationResultsController : ControllerBase
     }
 
     [HttpGet("scenario/{scenarioId:int}")]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<IEnumerable<OptimisationResultSummaryDto>>> GetByScenario(
         int scenarioId)
     {
@@ -32,6 +36,7 @@ public class OptimisationResultsController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Policy = AppPolicies.CanView)]
     public async Task<ActionResult<OptimisationResultResponseDto>> GetById(int id)
     {
         var result = await _optimisationResultService.GetByIdAsync(id);

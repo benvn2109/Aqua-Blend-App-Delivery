@@ -5,9 +5,9 @@ public class OptimisationResultSummaryDto
     public int Id { get; set; }
     public int ScenarioId { get; set; }
     public string Status { get; set; } = string.Empty;
-    public DateTime? SolvedAt { get; set; }
-    public DateTime? ReceivedAt { get; set; }
-    public string? ContractVersion { get; set; }
+    public DateTime SolvedAt { get; set; }
+    public DateTime ReceivedAt { get; set; }
+    public string ContractVersion { get; set; } = string.Empty;
     public decimal? TotalCost { get; set; }
     public string? Currency { get; set; }
     public DateTime CreatedAt { get; set; }
