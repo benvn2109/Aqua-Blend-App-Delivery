@@ -2,14 +2,31 @@ using AquaBlend.Api.Authorization;
 using AquaBlend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using AquaBlend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
+builder.Services.AddScoped<OptimisationResultService>();
 builder.Services.AddScoped<AquaBlend.Services.ScenarioService>();
 builder.Services.AddScoped<AquaBlend.Services.WaterSourceService>();
+
+const string AquaBlendFrontendPolicy = "AquaBlendFrontend";
+var allowedOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(AquaBlendFrontendPolicy, policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var useInMemoryDatabase = builder.Environment.IsEnvironment("Testing");
 var inMemoryDatabaseName =
@@ -80,6 +97,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(AquaBlendFrontendPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
