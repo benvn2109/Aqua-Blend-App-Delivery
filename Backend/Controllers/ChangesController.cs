@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using AquaBlend.Data;
 using AquaBlend.DTOs;
-using AquaBlend.DTOs.Changes;
+using AquaBlend.DTOs.OptimisationResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

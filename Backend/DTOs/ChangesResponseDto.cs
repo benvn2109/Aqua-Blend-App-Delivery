@@ -1,4 +1,4 @@
-using AquaBlend.DTOs.Changes;
+using AquaBlend.DTOs.OptimisationResults;
 using AquaBlend.Entities;
 
 namespace AquaBlend.DTOs;
