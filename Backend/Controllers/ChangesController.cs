@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using AquaBlend.Data;
 using AquaBlend.DTOs;
+using AquaBlend.DTOs.OptimisationResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,12 +71,33 @@ public sealed class ChangesController : ControllerBase
                 (s.UpdatedAt.HasValue && s.UpdatedAt.Value > sinceUtc))
             .ToListAsync(cancellationToken);
 
+        var optimisationResults = await _context.OptimisationResults
+            .AsNoTracking()
+            .Where(r =>
+                r.CreatedAt > sinceUtc ||
+                (r.UpdatedAt.HasValue && r.UpdatedAt.Value > sinceUtc))
+            .Select(r => new OptimisationResultSummaryDto
+            {
+                Id = r.Id,
+                ScenarioId = r.ScenarioId,
+                Status = r.Status,
+                SolvedAt = r.SolvedAt,
+                ReceivedAt = r.ReceivedAt,
+                ContractVersion = r.ContractVersion,
+                TotalCost = r.TotalCost,
+                Currency = r.Currency,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
+            })
+            .ToListAsync(cancellationToken);
+
         return Ok(new ChangesResponseDto
         {
             RequestedSince = sinceUtc,
             ServerTimestamp = serverTimestamp,
             WaterSources = waterSources,
-            Scenarios = scenarios
+            Scenarios = scenarios,
+            OptimisationResults = optimisationResults
         });
     }
 }
