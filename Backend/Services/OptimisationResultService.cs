@@ -22,7 +22,7 @@ public class OptimisationResultService
             .Select(r => new OptimisationResultSummaryDto
             {
                 Id = r.Id,
-                ScenarioId = r.ScenarioId,
+                ScenarioId = r.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
                 Status = r.Status,
                 SolvedAt = r.SolvedAt,
                 ReceivedAt = r.ReceivedAt,
@@ -44,7 +44,7 @@ public class OptimisationResultService
             .Select(r => new OptimisationResultSummaryDto
             {
                 Id = r.Id,
-                ScenarioId = r.ScenarioId,
+                ScenarioId = r.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
                 Status = r.Status,
                 SolvedAt = r.SolvedAt,
                 ReceivedAt = r.ReceivedAt,
@@ -71,7 +71,7 @@ public class OptimisationResultService
         return new OptimisationResultResponseDto
         {
             Id = result.Id,
-            ScenarioId = result.ScenarioId,
+            ScenarioId = result.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
             Status = result.Status,
             SolvedAt = result.SolvedAt,
             ReceivedAt = result.ReceivedAt,

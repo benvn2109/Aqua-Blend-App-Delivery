@@ -40,3 +40,32 @@ existing blank ExternalId values to NULL. No manual backfill or database recreat
 
 just apply the migration.
 
+
+## OptimisationRun and the RunId re-pointing (Sprint 3)
+
+OptimisationResult now belongs to an OptimisationRun rather than directly to a Scenario, since the
+AI team pushes results against a run rather than the backend calling a solver directly. A run is
+created via POST /api/scenarios/{id}/runs with WorkflowStatus starting at queued, and results are
+posted against that run's id.
+
+Schema:
+- OptimisationRun: ScenarioId, WorkflowStatus (draft, ready, queued, solving, solved, analysing,
+  completed), SolverStatus (nullable until solved: OPTIMAL, INFEASIBLE, UNBOUNDED, TIME_LIMIT, ERROR),
+  ScenarioSnapshotJson (jsonb, intended to capture the network configuration at run-creation time),
+  automatic CreatedAt/UpdatedAt.
+- OptimisationResult.RunId is now required and unique (one result per run).
+- OptimisationResult.ScenarioId is now nullable and kept temporarily for backward compatibility
+  with the Sprint 2 endpoints during the transition. It should be removed once those endpoints
+  are fully migrated to look up by RunId instead.
+
+The migration backfills existing OptimisationResult rows automatically: for each result missing a
+RunId, it creates a synthetic OptimisationRun (WorkflowStatus completed, SolverStatus copied from
+the result's own Status, an empty ScenarioSnapshotJson placeholder) and points the result at it.
+No manual database changes are needed, just apply the migration.
+
+Open items, not yet resolved:
+- ScenarioSnapshotJson is currently a placeholder ("{}") in seed data. The real snapshot should be
+  populated by whichever endpoint creates a run.
+- SolverStatus casing: the MILP contract emits uppercase values (OPTIMAL, INFEASIBLE, etc.), while
+  an earlier architecture document used lowercase. Stored here exactly as the contract sends it;
+  any casing translation for consumers should happen at the API layer, not the database.

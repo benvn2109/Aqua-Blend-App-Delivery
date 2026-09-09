@@ -10,4 +10,5 @@ public class Scenario
     public string? ExternalId { get; set; }
 
     public ICollection<OptimisationResult> OptimisationResults { get; set; } = new List<OptimisationResult>();
+    public ICollection<OptimisationRun> OptimisationRuns { get; set; } = new List<OptimisationRun>();
 }
