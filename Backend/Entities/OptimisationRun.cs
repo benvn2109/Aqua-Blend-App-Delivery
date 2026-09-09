@@ -11,7 +11,7 @@ public class OptimisationRun
 
     public string? SolverStatus { get; set; }
 
-    public string ScenarioSnapshotJson { get; set; } = string.Empty;
+    public string ScenarioSnapshotJson { get; set; } = "{}";
 
     public OptimisationResult? Result { get; set; }
 

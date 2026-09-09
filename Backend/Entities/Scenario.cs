@@ -12,3 +12,4 @@ public class Scenario
     public ICollection<OptimisationResult> OptimisationResults { get; set; } = new List<OptimisationResult>();
     public ICollection<OptimisationRun> OptimisationRuns { get; set; } = new List<OptimisationRun>();
 }
+
