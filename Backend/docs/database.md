@@ -41,6 +41,7 @@ existing blank ExternalId values to NULL. No manual backfill or database recreat
 just apply the migration.
 
 
+
 ## OptimisationRun and the RunId re-pointing (Sprint 3)
 
 OptimisationResult now belongs to an OptimisationRun rather than directly to a Scenario, since the
@@ -49,14 +50,15 @@ created via POST /api/scenarios/{id}/runs with WorkflowStatus starting at queued
 posted against that run's id.
 
 Schema:
-- OptimisationRun: ScenarioId, WorkflowStatus (draft, ready, queued, solving, solved, analysing,
-  completed), SolverStatus (nullable until solved: OPTIMAL, INFEASIBLE, UNBOUNDED, TIME_LIMIT, ERROR),
-  ScenarioSnapshotJson (jsonb, intended to capture the network configuration at run-creation time),
-  automatic CreatedAt/UpdatedAt.
-- OptimisationResult.RunId is now required and unique (one result per run).
-- OptimisationResult.ScenarioId is now nullable and kept temporarily for backward compatibility
-  with the Sprint 2 endpoints during the transition. It should be removed once those endpoints
-  are fully migrated to look up by RunId instead.
+
+* OptimisationRun: ScenarioId, WorkflowStatus (draft, ready, queued, solving, solved, analysing,
+completed), SolverStatus (nullable until solved: OPTIMAL, INFEASIBLE, UNBOUNDED, TIME\_LIMIT, ERROR),
+ScenarioSnapshotJson (jsonb, intended to capture the network configuration at run-creation time),
+automatic CreatedAt/UpdatedAt.
+* OptimisationResult.RunId is now required and unique (one result per run).
+* OptimisationResult.ScenarioId is now nullable and kept temporarily for backward compatibility
+with the Sprint 2 endpoints during the transition. It should be removed once those endpoints
+are fully migrated to look up by RunId instead.
 
 The migration backfills existing OptimisationResult rows automatically: for each result missing a
 RunId, it creates a synthetic OptimisationRun (WorkflowStatus completed, SolverStatus copied from
@@ -64,8 +66,28 @@ the result's own Status, an empty ScenarioSnapshotJson placeholder) and points t
 No manual database changes are needed, just apply the migration.
 
 Open items, not yet resolved:
-- ScenarioSnapshotJson is currently a placeholder ("{}") in seed data. The real snapshot should be
-  populated by whichever endpoint creates a run.
-- SolverStatus casing: the MILP contract emits uppercase values (OPTIMAL, INFEASIBLE, etc.), while
-  an earlier architecture document used lowercase. Stored here exactly as the contract sends it;
-  any casing translation for consumers should happen at the API layer, not the database.
+
+* ScenarioSnapshotJson is currently a placeholder ("{}") in seed data. The real snapshot should be
+populated by whichever endpoint creates a run.
+* SolverStatus casing: the MILP contract emits uppercase values (OPTIMAL, INFEASIBLE, etc.), while
+an earlier architecture document used lowercase. Stored here exactly as the contract sends it;
+any casing translation for consumers should happen at the API layer, not the database.
+
+## Reference-data entities (Sprint 3)
+
+Added five new reference-data entities that back the frontend's scenario builder:
+Plant, DemandZone, SourcePlantLink, PlantZoneLink, QualityProfile. All are keyed by an internal
+Id, with Plant and DemandZone also carrying an ExternalId (nullable, unique) to align with the
+MILP contract's plant\_id/zone\_id where applicable.
+
+WaterSource was expanded from 2 fields to include availability status, withdrawal bounds,
+activation cost, cost per ML, provenance flags, and a model-ready flag, matching the source
+fields described in the MILP model output contract. WaterSource.ExternalId is nullable for the
+same reason as Scenario.ExternalId: existing rows have no natural external identifier to backfill,
+and NULL avoids the unique-index collision that a blank-string default would cause.
+
+Open item: QualityProfile is currently modelled as a standalone named limit (e.g. "Standard
+Drinking Water") rather than linked directly to a Plant, per the MILP contract's own note that
+quality limits are global rather than per-plant. This may need revisiting once the frontend's
+exact GET /api/quality-profiles shape is confirmed with Ashwitha and Pavan.
+
