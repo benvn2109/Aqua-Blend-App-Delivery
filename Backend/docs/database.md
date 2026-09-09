@@ -91,3 +91,29 @@ Drinking Water") rather than linked directly to a Plant, per the MILP contract's
 quality limits are global rather than per-plant. This may need revisiting once the frontend's
 exact GET /api/quality-profiles shape is confirmed with Ashwitha and Pavan.
 
+
+## Scenario network configuration and validation (Sprint 3)
+
+Scenario now carries NetworkConfigJson (jsonb, default '{}') and ValidationIssuesJson (jsonb,
+default '[]'), holding the full network configuration (selected sources, plants, zones, links,
+overrides, quality profile) and any validation issues respectively. IsReady (boolean) indicates
+whether the scenario currently passes validation.
+
+This is distinct from OptimisationRun.ScenarioSnapshotJson: NetworkConfigJson is the current,
+editable draft; the run's snapshot is an immutable copy taken at run-creation time.
+
+Both JSON columns use a database-level default via HasDefaultValueSql, not just a C# property
+initializer, to avoid the same class of bug as ScenarioSnapshotJson and ExternalId in earlier
+sprints: a C#-only default doesn't help rows inserted outside the application code.
+
+The composite index originally specified as (ScenarioId, SolvedAt DESC) has been implemented as
+(ScenarioId, CreatedAt DESC) on OptimisationRun rather than OptimisationResult, since results now
+belong to runs rather than directly to scenarios. This supports listing a scenario's run history,
+newest first.
+
+Open items:
+- IsReady/ValidationIssuesJson currently just provide storage. Whether validation state should be
+  persisted (surviving between requests) or computed fresh on every /validate call is for whoever
+  builds that endpoint to decide.
+- QualityProfile is modelled as a standalone named limit, not linked to a specific Plant (see the
+  Sprint 3 reference-data note above) — still pending confirmation.

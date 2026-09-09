@@ -100,8 +100,19 @@ public class AquaBlendDbContext : DbContext
             .Property(r => r.ScenarioSnapshotJson)
             .HasColumnType("jsonb");
 
+        modelBuilder.Entity<Scenario>()
+            .Property(s => s.NetworkConfigJson)
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'{}'::jsonb");
+
+        modelBuilder.Entity<Scenario>()
+            .Property(s => s.ValidationIssuesJson)
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'[]'::jsonb");
+
         modelBuilder.Entity<OptimisationRun>()
-            .HasIndex(r => new { r.ScenarioId, r.CreatedAt });
+            .HasIndex(r => new { r.ScenarioId, r.CreatedAt })
+            .IsDescending(false, true);
 
         modelBuilder.Entity<OptimisationRun>()
             .HasOne(r => r.Scenario)
