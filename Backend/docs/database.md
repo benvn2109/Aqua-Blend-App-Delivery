@@ -40,3 +40,80 @@ existing blank ExternalId values to NULL. No manual backfill or database recreat
 
 just apply the migration.
 
+
+
+## OptimisationRun and the RunId re-pointing (Sprint 3)
+
+OptimisationResult now belongs to an OptimisationRun rather than directly to a Scenario, since the
+AI team pushes results against a run rather than the backend calling a solver directly. A run is
+created via POST /api/scenarios/{id}/runs with WorkflowStatus starting at queued, and results are
+posted against that run's id.
+
+Schema:
+
+* OptimisationRun: ScenarioId, WorkflowStatus (draft, ready, queued, solving, solved, analysing,
+completed), SolverStatus (nullable until solved: OPTIMAL, INFEASIBLE, UNBOUNDED, TIME\_LIMIT, ERROR),
+ScenarioSnapshotJson (jsonb, intended to capture the network configuration at run-creation time),
+automatic CreatedAt/UpdatedAt.
+* OptimisationResult.RunId is now required and unique (one result per run).
+* OptimisationResult.ScenarioId is now nullable and kept temporarily for backward compatibility
+with the Sprint 2 endpoints during the transition. It should be removed once those endpoints
+are fully migrated to look up by RunId instead.
+
+The migration backfills existing OptimisationResult rows automatically: for each result missing a
+RunId, it creates a synthetic OptimisationRun (WorkflowStatus completed, SolverStatus copied from
+the result's own Status, an empty ScenarioSnapshotJson placeholder) and points the result at it.
+No manual database changes are needed, just apply the migration.
+
+Open items, not yet resolved:
+
+* ScenarioSnapshotJson is currently a placeholder ("{}") in seed data. The real snapshot should be
+populated by whichever endpoint creates a run.
+* SolverStatus casing: the MILP contract emits uppercase values (OPTIMAL, INFEASIBLE, etc.), while
+an earlier architecture document used lowercase. Stored here exactly as the contract sends it;
+any casing translation for consumers should happen at the API layer, not the database.
+
+## Reference-data entities (Sprint 3)
+
+Added five new reference-data entities that back the frontend's scenario builder:
+Plant, DemandZone, SourcePlantLink, PlantZoneLink, QualityProfile. All are keyed by an internal
+Id, with Plant and DemandZone also carrying an ExternalId (nullable, unique) to align with the
+MILP contract's plant\_id/zone\_id where applicable.
+
+WaterSource was expanded from 2 fields to include availability status, withdrawal bounds,
+activation cost, cost per ML, provenance flags, and a model-ready flag, matching the source
+fields described in the MILP model output contract. WaterSource.ExternalId is nullable for the
+same reason as Scenario.ExternalId: existing rows have no natural external identifier to backfill,
+and NULL avoids the unique-index collision that a blank-string default would cause.
+
+Open item: QualityProfile is currently modelled as a standalone named limit (e.g. "Standard
+Drinking Water") rather than linked directly to a Plant, per the MILP contract's own note that
+quality limits are global rather than per-plant. This may need revisiting once the frontend's
+exact GET /api/quality-profiles shape is confirmed with Ashwitha and Pavan.
+
+
+## Scenario network configuration and validation (Sprint 3)
+
+Scenario now carries NetworkConfigJson (jsonb, default '{}') and ValidationIssuesJson (jsonb,
+default '[]'), holding the full network configuration (selected sources, plants, zones, links,
+overrides, quality profile) and any validation issues respectively. IsReady (boolean) indicates
+whether the scenario currently passes validation.
+
+This is distinct from OptimisationRun.ScenarioSnapshotJson: NetworkConfigJson is the current,
+editable draft; the run's snapshot is an immutable copy taken at run-creation time.
+
+Both JSON columns use a database-level default via HasDefaultValueSql, not just a C# property
+initializer, to avoid the same class of bug as ScenarioSnapshotJson and ExternalId in earlier
+sprints: a C#-only default doesn't help rows inserted outside the application code.
+
+The composite index originally specified as (ScenarioId, SolvedAt DESC) has been implemented as
+(ScenarioId, CreatedAt DESC) on OptimisationRun rather than OptimisationResult, since results now
+belong to runs rather than directly to scenarios. This supports listing a scenario's run history,
+newest first.
+
+Open items:
+- IsReady/ValidationIssuesJson currently just provide storage. Whether validation state should be
+  persisted (surviving between requests) or computed fresh on every /validate call is for whoever
+  builds that endpoint to decide.
+- QualityProfile is modelled as a standalone named limit, not linked to a specific Plant (see the
+  Sprint 3 reference-data note above) — still pending confirmation.

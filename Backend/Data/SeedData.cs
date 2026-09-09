@@ -41,13 +41,25 @@ public static class SeedData
             context.SaveChanges();
         }
 
-        if (!context.OptimisationResults.Any(r => r.ScenarioId == scenario.Id))
+        if (!context.OptimisationRuns.Any(r => r.ScenarioId == scenario.Id))
         {
             var resultJsonPath = Path.Combine(
                 AppContext.BaseDirectory, "Data", "SeedData", "sample_optimisation_result.json");
 
+            var run = new OptimisationRun
+            {
+                ScenarioId = scenario.Id,
+                WorkflowStatus = "completed",
+                SolverStatus = "OPTIMAL",
+                ScenarioSnapshotJson = "{}" // placeholder until scenario network config exists
+            };
+
+            context.OptimisationRuns.Add(run);
+            context.SaveChanges();
+
             context.OptimisationResults.Add(new OptimisationResult
             {
+                RunId = run.Id,
                 ScenarioId = scenario.Id,
                 Status = "OPTIMAL",
                 SolvedAt = DateTime.Parse("2026-07-17T10:32:00Z").ToUniversalTime(),
