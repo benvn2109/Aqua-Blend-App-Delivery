@@ -15,19 +15,25 @@ namespace AquaBlend.Tests;
 
 public class AquaBlendApiFactory : WebApplicationFactory<Program>
 {
+    private readonly string _inMemoryDatabaseName = Guid.NewGuid().ToString();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
 
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["InMemoryDatabaseName"] = Guid.NewGuid().ToString(),
-            });
-        });
         builder.ConfigureTestServices(services =>
 {
+    // Program.cs reads InMemoryDatabaseName from configuration before
+    // builder.Build() runs, which is before WebApplicationFactory's
+    // ConfigureAppConfiguration override is merged in - so that override
+    // was silently ignored and every test shared one "AquaBlendTestDb"
+    // instance. Replacing the DbContext registration here, after
+    // Program.cs's own AddDbContext call has already run, is the reliable
+    // way to give each factory instance its own isolated database.
+    services.RemoveAll<DbContextOptions<AquaBlendDbContext>>();
+    services.AddDbContext<AquaBlendDbContext>(options =>
+        options.UseInMemoryDatabase(_inMemoryDatabaseName));
+
     services
         .AddAuthentication(options =>
         {
