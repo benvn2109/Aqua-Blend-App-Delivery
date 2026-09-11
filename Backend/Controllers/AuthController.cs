@@ -1,10 +1,10 @@
 using System.Security.Claims;
-using AquaBlend.Api.Authorization;
-using AquaBlend.Api.DTOs.Auth;
+using AquaBlend.Authorization;
+using AquaBlend.DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AquaBlend.Api.Controllers;
+namespace AquaBlend.Controllers;
 
 [ApiController]
 [Route("api/auth")]

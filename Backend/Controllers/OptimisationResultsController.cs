@@ -1,7 +1,7 @@
 using AquaBlend.DTOs.OptimisationResults;
 using AquaBlend.Services;
 using Microsoft.AspNetCore.Mvc;
-using AquaBlend.Api.Authorization;
+using AquaBlend.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace AquaBlend.Controllers;

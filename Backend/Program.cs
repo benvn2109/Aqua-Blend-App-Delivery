@@ -1,4 +1,4 @@
-using AquaBlend.Api.Authorization;
+using AquaBlend.Authorization;
 using AquaBlend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
