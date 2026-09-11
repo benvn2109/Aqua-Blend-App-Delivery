@@ -132,4 +132,51 @@ public class AuthorizationEndpointsTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
+        [Fact]
+    public async Task Anonymous_CreateScenario_ReturnsUnauthorized()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var dto = new CreateScenarioDto
+        {
+            Name = "Anonymous Test Scenario",
+            Description = "Anonymous users must not create scenarios"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/scenarios", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Analyst_CreateScenario_ReturnsCreated()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Role", AppRoles.Analyst);
+
+        var dto = new CreateScenarioDto
+        {
+            Name = "Analyst Test Scenario",
+            Description = "Analysts can create scenarios"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/scenarios", dto);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Anonymous_CreateWaterSource_ReturnsUnauthorized()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var dto = new CreateWaterSourceDto
+        {
+            Name = "Anonymous Test Source",
+            Type = "Reservoir"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/water-sources", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }
