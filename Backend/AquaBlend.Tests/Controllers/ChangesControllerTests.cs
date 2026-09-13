@@ -102,6 +102,64 @@ public sealed class ChangesControllerTests
     }
 
     [Fact]
+    public async Task GetChanges_ScenarioUpdatedAfterSince_IsReturnedViaUpdatedAtClause()
+    {
+        var options = new DbContextOptionsBuilder<AquaBlendDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var context = new AquaBlendDbContext(options);
+
+        var scenario = new Scenario
+        {
+            Name = "Pre-threshold Scenario",
+            Description = "Created before the since threshold"
+        };
+
+        context.Scenarios.Add(scenario);
+
+        // ApplyTimestamps sets CreatedAt and UpdatedAt to the same value on
+        // insert, so a real delay is needed before capturing `since` or the
+        // insert's own timestamp could land on or after it.
+        await context.SaveChangesAsync();
+        await Task.Delay(50);
+
+        var since = DateTime.UtcNow;
+
+        // Another real delay so the update's UpdatedAt lands strictly after
+        // `since` rather than possibly matching it.
+        await Task.Delay(50);
+
+        scenario.Description = "Updated after the since threshold";
+        await context.SaveChangesAsync();
+
+        var controller = new ChangesController(context);
+
+        var result = await controller.GetChanges(
+            since.ToString("O"),
+            CancellationToken.None);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+
+        var response =
+            Assert.IsType<ChangesResponseDto>(okResult.Value);
+
+        var returned = Assert.Single(response.Scenarios);
+
+        // This is the crux of the test: the record must have been created
+        // before `since`, so it can only appear in the response via the
+        // UpdatedAt clause. Without this assertion, a timing slip could put
+        // CreatedAt after `since`, letting the CreatedAt clause alone
+        // satisfy the test while a missing/broken UpdatedAt clause goes
+        // undetected.
+        Assert.True(returned.CreatedAt <= since);
+
+        Assert.Equal(
+            "Updated after the since threshold",
+            returned.Description);
+    }
+
+    [Fact]
     public async Task GetChanges_NoChanges_ReturnsEmptyCollections()
     {
         var options = new DbContextOptionsBuilder<AquaBlendDbContext>()

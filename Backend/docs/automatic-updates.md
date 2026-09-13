@@ -26,6 +26,8 @@ The `since` query parameter is required and must contain a valid ISO 8601 UTC ti
 
 The endpoint checks the `CreatedAt` and `UpdatedAt` timestamps of supported entities and returns records created or updated after the supplied timestamp.
 
+`GET /api/changes` requires an authenticated request under the `CanView` policy. A response of 401 means the request is missing a bearer token or the token has expired.
+
 ## Response
 
 The endpoint returns:
@@ -140,7 +142,12 @@ let lastSuccessfulTimestamp = "2026-08-25T03:00:00Z";
 
 async function pollForChanges() {
     const response = await fetch(
-        `/api/changes?since=${encodeURIComponent(lastSuccessfulTimestamp)}`
+        `/api/changes?since=${encodeURIComponent(lastSuccessfulTimestamp)}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
     );
 
     if (!response.ok) {
