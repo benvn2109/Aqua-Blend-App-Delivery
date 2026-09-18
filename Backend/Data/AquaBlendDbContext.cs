@@ -12,6 +12,12 @@ public class AquaBlendDbContext : DbContext
     public DbSet<WaterSource> WaterSources => Set<WaterSource>();
     public DbSet<Scenario> Scenarios => Set<Scenario>();
     public DbSet<OptimisationResult> OptimisationResults => Set<OptimisationResult>();
+    public DbSet<OptimisationRun> OptimisationRuns => Set<OptimisationRun>();
+    public DbSet<Plant> Plants => Set<Plant>();
+    public DbSet<DemandZone> DemandZones => Set<DemandZone>();
+    public DbSet<SourcePlantLink> SourcePlantLinks => Set<SourcePlantLink>();
+    public DbSet<PlantZoneLink> PlantZoneLinks => Set<PlantZoneLink>();
+    public DbSet<QualityProfile> QualityProfiles => Set<QualityProfile>();
 
     public override int SaveChanges()
     {
@@ -52,31 +58,101 @@ public class AquaBlendDbContext : DbContext
         }
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-    modelBuilder.Entity<OptimisationResult>()
-        .Property(r => r.ResultJson)
-        .HasColumnType("jsonb");
+    {
+        modelBuilder.Entity<OptimisationResult>()
+            .Property(r => r.ResultJson)
+            .HasColumnType("jsonb");
 
-    modelBuilder.Entity<OptimisationResult>()
-        .Property(r => r.TotalCost)
-        .HasColumnType("numeric(18,2)");
+        modelBuilder.Entity<OptimisationResult>()
+            .Property(r => r.TotalCost)
+            .HasColumnType("numeric(18,2)");
 
-    modelBuilder.Entity<OptimisationResult>()
-        .HasIndex(r => r.ScenarioId);
+        modelBuilder.Entity<OptimisationResult>()
+            .HasIndex(r => r.ScenarioId);
 
-    modelBuilder.Entity<OptimisationResult>()
-        .HasIndex(r => r.Status);
+        modelBuilder.Entity<OptimisationResult>()
+            .HasIndex(r => r.Status);
 
-    modelBuilder.Entity<OptimisationResult>()
-        .HasIndex(r => r.SolvedAt);
+        modelBuilder.Entity<OptimisationResult>()
+            .HasIndex(r => r.SolvedAt);
 
-    modelBuilder.Entity<Scenario>()
-        .HasIndex(s => s.ExternalId)
-        .IsUnique();
-    modelBuilder.Entity<OptimisationResult>()
-    .HasOne(r => r.Scenario)
-    .WithMany(s => s.OptimisationResults)
-    .HasForeignKey(r => r.ScenarioId)
-    .OnDelete(DeleteBehavior.Restrict);
-}
+        modelBuilder.Entity<OptimisationResult>()
+            .HasIndex(r => r.RunId)
+            .IsUnique();
+
+        modelBuilder.Entity<Scenario>()
+            .HasIndex(s => s.ExternalId)
+            .IsUnique();
+
+        modelBuilder.Entity<OptimisationResult>()
+            .HasOne(r => r.Scenario)
+            .WithMany(s => s.OptimisationResults)
+            .HasForeignKey(r => r.ScenarioId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OptimisationResult>()
+            .HasOne(res => res.Run)
+            .WithOne(run => run.Result)
+            .HasForeignKey<OptimisationResult>(res => res.RunId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OptimisationRun>()
+            .Property(r => r.ScenarioSnapshotJson)
+            .HasColumnType("jsonb");
+
+        modelBuilder.Entity<Scenario>()
+            .Property(s => s.NetworkConfigJson)
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'{}'::jsonb");
+
+        modelBuilder.Entity<Scenario>()
+            .Property(s => s.ValidationIssuesJson)
+            .HasColumnType("jsonb")
+            .HasDefaultValueSql("'[]'::jsonb");
+
+        modelBuilder.Entity<OptimisationRun>()
+            .HasIndex(r => new { r.ScenarioId, r.CreatedAt })
+            .IsDescending(false, true);
+
+        modelBuilder.Entity<OptimisationRun>()
+            .HasOne(r => r.Scenario)
+            .WithMany(s => s.OptimisationRuns)
+            .HasForeignKey(r => r.ScenarioId)
+            .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Plant>()
+.HasIndex(p => p.ExternalId)
+.IsUnique();
+
+        modelBuilder.Entity<DemandZone>()
+            .HasIndex(z => z.ExternalId)
+            .IsUnique();
+
+        modelBuilder.Entity<WaterSource>()
+            .HasIndex(w => w.ExternalId)
+            .IsUnique();
+
+        modelBuilder.Entity<SourcePlantLink>()
+            .HasOne(l => l.WaterSource)
+            .WithMany()
+            .HasForeignKey(l => l.WaterSourceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SourcePlantLink>()
+            .HasOne(l => l.Plant)
+            .WithMany()
+            .HasForeignKey(l => l.PlantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PlantZoneLink>()
+            .HasOne(l => l.Plant)
+            .WithMany()
+            .HasForeignKey(l => l.PlantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<PlantZoneLink>()
+            .HasOne(l => l.DemandZone)
+            .WithMany()
+            .HasForeignKey(l => l.DemandZoneId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
 }

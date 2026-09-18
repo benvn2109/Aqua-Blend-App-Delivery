@@ -3,6 +3,7 @@ using System;
 using AquaBlend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AquaBlend.Api.Migrations
 {
     [DbContext(typeof(AquaBlendDbContext))]
-    partial class AquaBlendDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909121303_AddReferenceDataEntities")]
+    partial class AddReferenceDataEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,6 +40,7 @@ namespace AquaBlend.Api.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("ExternalId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
@@ -142,8 +146,7 @@ namespace AquaBlend.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ScenarioId", "CreatedAt")
-                        .IsDescending(false, true);
+                    b.HasIndex("ScenarioId", "CreatedAt");
 
                     b.ToTable("OptimisationRuns");
                 });
@@ -163,6 +166,7 @@ namespace AquaBlend.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ExternalId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsModelReady")
@@ -279,27 +283,12 @@ namespace AquaBlend.Api.Migrations
                     b.Property<string>("ExternalId")
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsReady")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("NetworkConfigJson")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValueSql("'{}'::jsonb");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ValidationIssuesJson")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("jsonb")
-                        .HasDefaultValueSql("'[]'::jsonb");
 
                     b.HasKey("Id");
 
