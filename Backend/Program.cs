@@ -1,4 +1,5 @@
 using AquaBlend.Api.Authorization;
+using AquaBlend.Api.Middleware;
 using AquaBlend.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -97,6 +98,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors(AquaBlendFrontendPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
