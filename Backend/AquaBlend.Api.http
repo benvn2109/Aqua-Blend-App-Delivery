@@ -1,6 +1,93 @@
 @AquaBlend.Api_HostAddress = http://localhost:5194
 
-GET {{AquaBlend.Api_HostAddress}}/weatherforecast/
+### Health
+
+GET {{AquaBlend.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+### Scenarios
+
+GET {{AquaBlend.Api_HostAddress}}/api/scenarios
+Accept: application/json
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+Accept: application/json
+
+###
+
+POST {{AquaBlend.Api_HostAddress}}/api/scenarios
+Content-Type: application/json
+
+{
+  "name": "Hyderabad Water Plan",
+  "description": "Baseline water allocation scenario",
+  "externalId": "scenario-001",
+  "networkConfig": {
+    "sources": [],
+    "plants": [],
+    "zones": [],
+    "links": [],
+    "overrides": {},
+    "qualityProfile": null
+  }
+}
+
+###
+
+PUT {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+Content-Type: application/json
+
+{
+  "name": "Updated Water Plan",
+  "description": "Updated allocation scenario",
+  "externalId": "scenario-001",
+  "networkConfig": {
+    "sources": [],
+    "plants": [],
+    "zones": [],
+    "links": [],
+    "overrides": {},
+    "qualityProfile": null
+  }
+}
+
+###
+
+DELETE {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+
+###
+
+### Optimisation results
+
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results
+Accept: application/json
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results/1
+Accept: application/json
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results/scenario/1
+Accept: application/json
+
+###
+
+### Changes
+
+GET {{AquaBlend.Api_HostAddress}}/api/changes
+Accept: application/json
+
+###
+
+### Current user
+
+GET {{AquaBlend.Api_HostAddress}}/api/auth/me
 Accept: application/json
 
 ###

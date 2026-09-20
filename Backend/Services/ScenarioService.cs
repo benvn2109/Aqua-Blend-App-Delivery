@@ -2,99 +2,128 @@ using AquaBlend.Data;
 using AquaBlend.DTOs.Scenarios;
 using AquaBlend.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
-namespace AquaBlend.Services
+namespace AquaBlend.Services;
+
+public class ScenarioService
 {
-    public class ScenarioService
+    private readonly AquaBlendDbContext _context;
+
+    public ScenarioService(AquaBlendDbContext context)
     {
-        private readonly AquaBlendDbContext _context;
+        _context = context;
+    }
 
-        public ScenarioService(AquaBlendDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<List<ScenarioResponseDto>> GetAllAsync()
-        {
-            return await _context.Scenarios
+    public async Task<List<ScenarioResponseDto>> GetAllAsync()
+    {
+        var scenarios = await _context.Scenarios
             .AsNoTracking()
-            .Select(s => new ScenarioResponseDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                Description = s.Description,
-                CreatedAt = s.CreatedAt,
-                UpdatedAt = s.UpdatedAt
-            })
             .ToListAsync();
+
+        return scenarios.Select(MapToResponse).ToList();
+    }
+
+    public async Task<ScenarioResponseDto?> GetByIdAsync(int id)
+    {
+        var scenario = await _context.Scenarios
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        return scenario is null ? null : MapToResponse(scenario);
+    }
+
+    public async Task<ScenarioResponseDto> CreateAsync(CreateScenarioDto dto)
+    {
+        var scenario = new Scenario
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            ExternalId = dto.ExternalId,
+            NetworkConfigJson = dto.NetworkConfig.HasValue
+                ? dto.NetworkConfig.Value.GetRawText()
+                : "{}"
+        };
+
+        _context.Scenarios.Add(scenario);
+        await _context.SaveChangesAsync();
+
+        return MapToResponse(scenario);
+    }
+
+    public async Task<bool> UpdateAsync(int id, UpdateScenarioDto dto)
+    {
+        var scenario = await _context.Scenarios.FindAsync(id);
+
+        if (scenario == null)
+            return false;
+
+        scenario.Name = dto.Name;
+        scenario.Description = dto.Description;
+        scenario.ExternalId = dto.ExternalId;
+
+        if (dto.NetworkConfig.HasValue)
+        {
+            scenario.NetworkConfigJson = dto.NetworkConfig.Value.GetRawText();
         }
 
-        public async Task<ScenarioResponseDto?> GetByIdAsync(int id)
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var scenario = await _context.Scenarios.FindAsync(id);
+
+        if (scenario == null)
+            return false;
+
+        _context.Scenarios.Remove(scenario);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    private static ScenarioResponseDto MapToResponse(Scenario scenario)
+    {
+        return new ScenarioResponseDto
         {
-            var scenario = await _context.Scenarios
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.Id == id);
+            Id = scenario.Id,
+            Name = scenario.Name,
+            Description = scenario.Description,
+            ExternalId = scenario.ExternalId,
+            NetworkConfig = ParseJsonOrEmptyObject(scenario.NetworkConfigJson),
+            IsReady = scenario.IsReady,
+            ValidationIssues = ParseJsonOrEmptyArray(scenario.ValidationIssuesJson),
+            CreatedAt = scenario.CreatedAt,
+            UpdatedAt = scenario.UpdatedAt
+        };
+    }
 
-            if (scenario == null)
-                return null;
-
-            return new ScenarioResponseDto
-            {
-                Id = scenario.Id,
-                Name = scenario.Name,
-                Description = scenario.Description,
-                CreatedAt = scenario.CreatedAt,
-                UpdatedAt = scenario.UpdatedAt
-            };
+    private static JsonElement ParseJsonOrEmptyObject(string json)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.Clone();
         }
-
-        public async Task<ScenarioResponseDto> CreateAsync(CreateScenarioDto dto)
+        catch (JsonException)
         {
-            var scenario = new Scenario
-            {
-                Name = dto.Name,
-                Description = dto.Description
-            };
-
-            _context.Scenarios.Add(scenario);
-            await _context.SaveChangesAsync();
-
-            return new ScenarioResponseDto
-            {
-                Id = scenario.Id,
-                Name = scenario.Name,
-                Description = scenario.Description,
-                CreatedAt = scenario.CreatedAt,
-                UpdatedAt = scenario.UpdatedAt
-            };
+            return JsonDocument.Parse("{}").RootElement.Clone();
         }
+    }
 
-        public async Task<bool> UpdateAsync(int id, UpdateScenarioDto dto)
+    private static JsonElement ParseJsonOrEmptyArray(string json)
+    {
+        try
         {
-            var scenario = await _context.Scenarios.FindAsync(id);
-
-            if (scenario == null)
-                return false;
-
-            scenario.Name = dto.Name;
-            scenario.Description = dto.Description;
-
-            await _context.SaveChangesAsync();
-
-            return true;
+            using var document = JsonDocument.Parse(json);
+            return document.RootElement.Clone();
         }
-
-        public async Task<bool> DeleteAsync(int id)
+        catch (JsonException)
         {
-            var scenario = await _context.Scenarios.FindAsync(id);
-
-            if (scenario == null)
-                return false;
-
-            _context.Scenarios.Remove(scenario);
-            await _context.SaveChangesAsync();
-
-            return true;
+            return JsonDocument.Parse("[]").RootElement.Clone();
         }
     }
 }
