@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using AquaBlend.Api.Authorization;
+using AquaBlend.Authorization;
 using AquaBlend.DTOs.Scenarios;
 using AquaBlend.DTOs.WaterSources;
 
@@ -131,5 +131,84 @@ public class AuthorizationEndpointsTests : IDisposable
         var response = await _client.PostAsJsonAsync("/api/water-sources", dto);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+        [Fact]
+    public async Task Anonymous_CreateScenario_ReturnsUnauthorized()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var dto = new CreateScenarioDto
+        {
+            Name = "Anonymous Test Scenario",
+            Description = "Anonymous users must not create scenarios"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/scenarios", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Analyst_CreateScenario_ReturnsCreated()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Role", AppRoles.Analyst);
+
+        var dto = new CreateScenarioDto
+        {
+            Name = "Analyst Test Scenario",
+            Description = "Analysts can create scenarios"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/scenarios", dto);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Anonymous_CreateWaterSource_ReturnsUnauthorized()
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var dto = new CreateWaterSourceDto
+        {
+            Name = "Anonymous Test Source",
+            Type = "Reservoir"
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/water-sources", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("/api/sources")]
+    [InlineData("/api/plants")]
+    [InlineData("/api/demand-zones")]
+    [InlineData("/api/network-links")]
+    [InlineData("/api/quality-profiles")]
+    public async Task Anonymous_GetReferenceData_ReturnsUnauthorized(string endpoint)
+    {
+        _client.DefaultRequestHeaders.Add("X-Test-Anonymous", "true");
+
+        var response = await _client.GetAsync(endpoint);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("/api/sources")]
+    [InlineData("/api/plants")]
+    [InlineData("/api/demand-zones")]
+    [InlineData("/api/network-links")]
+    [InlineData("/api/quality-profiles")]
+    public async Task Viewer_GetReferenceData_ReturnsOk(string endpoint)
+    {
+        // Reference data is read-only reference/config data - CanView (any
+        // authenticated role) is enough, there is no write path to lock down.
+        _client.DefaultRequestHeaders.Add("X-Test-Role", AppRoles.Viewer);
+
+        var response = await _client.GetAsync(endpoint);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

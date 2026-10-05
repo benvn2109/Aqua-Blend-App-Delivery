@@ -9,8 +9,8 @@ public static class SeedData
         if (!context.WaterSources.Any())
         {
             context.WaterSources.AddRange(
-                new WaterSource { Name = "Reservoir A", Type = "Surface"},
-                new WaterSource { Name = "Bore Well 1", Type = "Groundwater"});
+                new WaterSource { Name = "Reservoir A", Type = "reservoir" },
+                new WaterSource { Name = "Bore Well 1", Type = "groundwater" });
 
             context.SaveChanges();
         }

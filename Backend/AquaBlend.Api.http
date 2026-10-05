@@ -1,4 +1,5 @@
 @AquaBlend.Api_HostAddress = http://localhost:5194
+@AquaBlend.Api_Token = replace-with-a-valid-jwt
 
 ### Health
 
@@ -89,5 +90,37 @@ Accept: application/json
 
 GET {{AquaBlend.Api_HostAddress}}/api/auth/me
 Accept: application/json
+
+###
+### Reference data — Sprint 3 (Member 4)
+### All five are GET-only, gated by the CanView policy (any authenticated role).
+
+GET {{AquaBlend.Api_HostAddress}}/api/sources
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/plants
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/demand-zones
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/network-links
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
+
+###
+
+GET {{AquaBlend.Api_HostAddress}}/api/quality-profiles
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
 
 ###

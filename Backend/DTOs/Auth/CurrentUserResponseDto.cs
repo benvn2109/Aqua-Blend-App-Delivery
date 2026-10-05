@@ -1,4 +1,4 @@
-namespace AquaBlend.Api.DTOs.Auth;
+namespace AquaBlend.DTOs.Auth;
 
 public sealed record CurrentUserResponseDto(
     string? UserId,

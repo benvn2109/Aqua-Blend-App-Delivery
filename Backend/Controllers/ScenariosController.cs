@@ -1,4 +1,4 @@
-using AquaBlend.Api.Authorization;
+using AquaBlend.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using AquaBlend.DTOs.Scenarios;
 using AquaBlend.Services;
