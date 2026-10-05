@@ -117,3 +117,27 @@ Open items:
   builds that endpoint to decide.
 - QualityProfile is modelled as a standalone named limit, not linked to a specific Plant (see the
   Sprint 3 reference-data note above) — still pending confirmation.
+
+## WaterSource.Type — source_type vocabulary (Sprint 3, resolved)
+
+WaterSource.Type is a free-text column with no database check constraint, same treatment as
+OptimisationRun.WorkflowStatus and SolverStatus above: the allowed values are documented here,
+not enforced at the schema level, so the contract can grow without a migration each time.
+
+Agreed values (lowercase, mirroring the MILP model output contract's source_type exactly):
+
+* reservoir
+* river
+* groundwater
+
+"Surface" was never a fourth value — it's the taxonomy category one level up that contains both
+reservoir and river, so it was never a sibling of groundwater. The two seeded rows are now
+reservoir ("Reservoir A") and groundwater ("Bore Well 1"); no fourth type is needed.
+
+If a genuine new source type comes up (e.g. desalination, recycled water), it goes into the MILP
+contract first and reaches this project from there — this project mirrors the contract's vocabulary,
+it does not extend it independently.
+
+Existing rows are normalised by the NormaliseWaterSourceTypes migration, which Program.cs applies
+on startup (Surface → reservoir, any casing of reservoir/river/groundwater → lowercase). No manual
+step is needed.

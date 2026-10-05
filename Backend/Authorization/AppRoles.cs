@@ -1,4 +1,4 @@
-namespace AquaBlend.Api.Authorization;
+namespace AquaBlend.Authorization;
 
 public static class AppRoles
 {
