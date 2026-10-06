@@ -1,11 +1,118 @@
 @AquaBlend.Api_HostAddress = http://localhost:5194
 @AquaBlend.Api_Token = replace-with-a-valid-jwt
 
-GET {{AquaBlend.Api_HostAddress}}/weatherforecast/
+### Health
+GET {{AquaBlend.Api_HostAddress}}/api/health
 Accept: application/json
 
 ###
 
+### Get all water sources
+GET {{AquaBlend.Api_HostAddress}}/api/water-sources
+Accept: application/json
+
+###
+
+### Get water source by ID
+GET {{AquaBlend.Api_HostAddress}}/api/water-sources/1
+Accept: application/json
+
+###
+
+### Create water source
+POST {{AquaBlend.Api_HostAddress}}/api/water-sources
+Content-Type: application/json
+
+{
+  "name": "Main Reservoir",
+  "type": "Surface"
+}
+
+###
+
+### Update water source
+PUT {{AquaBlend.Api_HostAddress}}/api/water-sources/1
+Content-Type: application/json
+
+{
+  "name": "Updated Reservoir",
+  "type": "Surface"
+}
+
+###
+
+### Delete water source
+DELETE {{AquaBlend.Api_HostAddress}}/api/water-sources/1
+
+###
+
+### Get all scenarios
+GET {{AquaBlend.Api_HostAddress}}/api/scenarios
+Accept: application/json
+
+###
+
+### Get scenario by ID
+GET {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+Accept: application/json
+
+###
+
+### Create scenario
+POST {{AquaBlend.Api_HostAddress}}/api/scenarios
+Content-Type: application/json
+
+{
+  "name": "Summer Supply Scenario",
+  "description": "Scenario for summer water demand."
+}
+
+###
+
+### Update scenario
+PUT {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+Content-Type: application/json
+
+{
+  "name": "Updated Summer Scenario",
+  "description": "Updated scenario description."
+}
+
+###
+
+### Delete scenario
+DELETE {{AquaBlend.Api_HostAddress}}/api/scenarios/1
+
+###
+
+### Get optimisation results
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results
+Accept: application/json
+
+###
+
+### Get optimisation result by ID
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results/1
+Accept: application/json
+
+###
+
+### Get optimisation results by scenario
+GET {{AquaBlend.Api_HostAddress}}/api/optimisation-results/scenario/1
+Accept: application/json
+
+###
+
+### Get changes
+GET {{AquaBlend.Api_HostAddress}}/api/changes?since=2026-09-20T09:00:00Z
+Accept: application/json
+
+###
+
+### Get current authenticated user
+GET {{AquaBlend.Api_HostAddress}}/api/auth/me
+Accept: application/json
+Authorization: Bearer {{AquaBlend.Api_Token}}
 ### Reference data — Sprint 3 (Member 4)
 ### All five are GET-only, gated by the CanView policy (any authenticated role).
 

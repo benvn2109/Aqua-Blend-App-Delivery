@@ -1,3 +1,4 @@
+using AquaBlend.Api.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi.Models;
 using AquaBlend.Authorization;
@@ -54,6 +55,33 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var details = context.ModelState
+                .Where(x => x.Value?.Errors.Count > 0)
+                .SelectMany(x => x.Value!.Errors.Select(error =>
+                    new AquaBlend.DTOs.Common.ApiErrorDetailDto
+                    {
+                        Field = x.Key,
+                        Message = string.IsNullOrWhiteSpace(error.ErrorMessage)
+                            ? "The supplied value is invalid."
+                            : error.ErrorMessage
+                    }))
+                .ToArray();
+
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(
+                new AquaBlend.DTOs.Common.ApiErrorResponseDto
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Error = "Validation failed",
+                    Details = details,
+                    Timestamp = DateTime.UtcNow
+                });
+        };
+    });
 
 builder.Services.AddControllers();
 
@@ -158,6 +186,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCors(AquaBlendFrontendPolicy);
 
