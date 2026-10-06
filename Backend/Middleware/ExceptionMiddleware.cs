@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using AquaBlend.DTOs.Common;
+using AquaBlend.Api.Exceptions;
+using AquaBlend.DTOs.Common;
+using Microsoft.Extensions.Options;
 
 namespace AquaBlend.Api.Middleware;
 
@@ -15,6 +18,16 @@ public sealed class ExceptionMiddleware
     {
         _next = next;
         _logger = logger;
+    private readonly JsonSerializerOptions _jsonOptions;
+
+    public ExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionMiddleware> logger,
+        IOptions<Microsoft.AspNetCore.Mvc.JsonOptions> jsonOptions)
+    {
+        _next = next;
+        _logger = logger;
+        _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -38,6 +51,7 @@ public sealed class ExceptionMiddleware
                 });
         }
         catch (KeyNotFoundException ex)
+        catch (ResourceNotFoundException ex)
         {
             await WriteErrorResponseAsync(
                 context,
@@ -68,6 +82,7 @@ public sealed class ExceptionMiddleware
     }
 
     private static async Task WriteErrorResponseAsync(
+    private async Task WriteErrorResponseAsync(
         HttpContext context,
         int statusCode,
         string error,
@@ -75,6 +90,9 @@ public sealed class ExceptionMiddleware
     {
         if (context.Response.HasStarted)
             return;
+        {
+            return;
+        }
 
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
@@ -89,5 +107,8 @@ public sealed class ExceptionMiddleware
 
         await context.Response.WriteAsync(
             JsonSerializer.Serialize(response));
+    }
+}
+            JsonSerializer.Serialize(response, _jsonOptions));
     }
 }
