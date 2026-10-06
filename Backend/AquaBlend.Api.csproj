@@ -18,8 +18,16 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
 
+  <!-- The test project lives inside this project's folder, so the SDK's default
+       globs would sweep in its sources and its bin/obj output. Excluding only
+       Compile let its JSON output be picked up as Content and copied back into
+       the test output each build, nesting AquaBlend.Tests\bin one level deeper
+       every time. -->
   <ItemGroup>
     <Compile Remove="AquaBlend.Tests/**/*.cs" />
+    <Content Remove="AquaBlend.Tests/**" />
+    <None Remove="AquaBlend.Tests/**" />
+    <EmbeddedResource Remove="AquaBlend.Tests/**" />
   </ItemGroup>
 
   <ItemGroup>

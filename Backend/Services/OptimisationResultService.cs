@@ -22,7 +22,8 @@ public class OptimisationResultService
             .Select(r => new OptimisationResultSummaryDto
             {
                 Id = r.Id,
-                ScenarioId = r.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
+                ScenarioId = r.Run.ScenarioId,
+                RunId = r.RunId,
                 Status = r.Status,
                 SolvedAt = r.SolvedAt,
                 ReceivedAt = r.ReceivedAt,
@@ -39,12 +40,13 @@ public class OptimisationResultService
     {
         return await _context.OptimisationResults
             .AsNoTracking()
-            .Where(r => r.ScenarioId == scenarioId)
+            .Where(r => r.Run.ScenarioId == scenarioId)
             .OrderByDescending(r => r.ReceivedAt)
             .Select(r => new OptimisationResultSummaryDto
             {
                 Id = r.Id,
-                ScenarioId = r.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
+                ScenarioId = r.Run.ScenarioId,
+                RunId = r.RunId,
                 Status = r.Status,
                 SolvedAt = r.SolvedAt,
                 ReceivedAt = r.ReceivedAt,
@@ -61,6 +63,7 @@ public class OptimisationResultService
     {
         var result = await _context.OptimisationResults
             .AsNoTracking()
+            .Include(r => r.Run)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (result is null)
@@ -71,7 +74,8 @@ public class OptimisationResultService
         return new OptimisationResultResponseDto
         {
             Id = result.Id,
-            ScenarioId = result.ScenarioId ?? 0, // TODO(Akhil): temporary during RunId migration, see Sprint 3 plan
+            ScenarioId = result.Run.ScenarioId,
+            RunId = result.RunId,
             Status = result.Status,
             SolvedAt = result.SolvedAt,
             ReceivedAt = result.ReceivedAt,

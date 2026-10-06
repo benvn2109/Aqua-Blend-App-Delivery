@@ -104,9 +104,22 @@ public class OptimisationResultEndpointTests : IDisposable
             context.Scenarios.Add(otherScenario);
             await context.SaveChangesAsync();
             otherScenarioId = otherScenario.Id;
- 
+
+            // The route filters through the result's run, so the second result
+            // needs a real run on the other scenario - without one it would be
+            // excluded for having no run, not for belonging to another scenario.
+            var otherRun = new OptimisationRun
+            {
+                ScenarioId = otherScenarioId,
+                WorkflowStatus = "completed",
+                SolverStatus = "OPTIMAL"
+            };
+            context.OptimisationRuns.Add(otherRun);
+            await context.SaveChangesAsync();
+
             context.OptimisationResults.Add(new OptimisationResult
             {
+                RunId = otherRun.Id,
                 ScenarioId = otherScenarioId,
                 Status = "OPTIMAL",
                 SolvedAt = DateTime.UtcNow,
@@ -137,7 +150,63 @@ public class OptimisationResultEndpointTests : IDisposable
         Assert.NotEmpty(results!);
         Assert.All(results!, r => Assert.Equal(seededScenarioId, r.ScenarioId));
     }
- 
+
+    [Fact]
+    public async Task GetByScenario_IncludesResultWithoutLegacyScenarioId()
+    {
+        // Results posted against a run need not carry the deprecated
+        // OptimisationResult.ScenarioId column; the route must find them
+        // through the run instead.
+        int scenarioId;
+        int resultId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AquaBlendDbContext>();
+
+            var scenario = new Scenario
+            {
+                Name = "Run-only Scenario",
+                Description = "Result linked through its run only"
+            };
+            context.Scenarios.Add(scenario);
+            await context.SaveChangesAsync();
+            scenarioId = scenario.Id;
+
+            var run = new OptimisationRun
+            {
+                ScenarioId = scenarioId,
+                WorkflowStatus = "completed",
+                SolverStatus = "OPTIMAL"
+            };
+            context.OptimisationRuns.Add(run);
+            await context.SaveChangesAsync();
+
+            var result = new OptimisationResult
+            {
+                RunId = run.Id,
+                ScenarioId = null,
+                Status = "OPTIMAL",
+                SolvedAt = DateTime.UtcNow,
+                ReceivedAt = DateTime.UtcNow,
+                ContractVersion = "1.0",
+                ResultJson = "{\"scenario_id\":\"run-only\"}"
+            };
+            context.OptimisationResults.Add(result);
+            await context.SaveChangesAsync();
+            resultId = result.Id;
+        }
+
+        var results = await _client.GetFromJsonAsync<List<OptimisationResultSummaryDto>>(
+            $"/api/optimisation-results/scenario/{scenarioId}");
+
+        Assert.NotNull(results);
+        var only = Assert.Single(results!);
+        Assert.Equal(resultId, only.Id);
+
+        // Reported scenario must match the one it was filtered by, not 0.
+        Assert.Equal(scenarioId, only.ScenarioId);
+    }
+
     [Fact]
     public async Task GetById_UnknownId_ReturnsNotFound()
     {

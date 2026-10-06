@@ -54,13 +54,20 @@ builder.Services.AddOpenApi(options =>
         return Task.CompletedTask;
     });
 });
+
 builder.Services.AddControllers();
+
+// Application services.
 builder.Services.AddScoped<OptimisationResultService>();
-builder.Services.AddScoped<AquaBlend.Services.ScenarioService>();
-builder.Services.AddScoped<AquaBlend.Services.WaterSourceService>();
-builder.Services.AddScoped<AquaBlend.Services.ReferenceDataService>();
+builder.Services.AddScoped<ScenarioService>();
+builder.Services.AddScoped<ScenarioValidationService>();
+builder.Services.AddScoped<RunService>();
+builder.Services.AddScoped<RunStatusService>();
+builder.Services.AddScoped<WaterSourceService>();
+builder.Services.AddScoped<ReferenceDataService>();
 
 const string AquaBlendFrontendPolicy = "AquaBlendFrontend";
+
 var allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? [];
@@ -76,6 +83,7 @@ builder.Services.AddCors(options =>
 });
 
 var useInMemoryDatabase = builder.Environment.IsEnvironment("Testing");
+
 var inMemoryDatabaseName =
     builder.Configuration.GetValue<string>("InMemoryDatabaseName")
     ?? "AquaBlendTestDb";
@@ -95,7 +103,12 @@ builder.Services.AddDbContext<AquaBlendDbContext>(options =>
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
+    .AddJwtBearer(options =>
+    {
+        builder.Configuration
+            .GetSection("Authentication:Schemes:Bearer")
+            .Bind(options);
+    });
 
 builder.Services.AddAuthorization(options =>
 {
@@ -114,7 +127,8 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(
         AppPolicies.CanAdminister,
-        policy => policy.RequireRole(AppRoles.Admin));
+        policy => policy.RequireRole(
+            AppRoles.Admin));
 });
 
 var app = builder.Build();
@@ -144,7 +158,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
 app.UseCors(AquaBlendFrontendPolicy);
+
 app.UseAuthentication();
 app.UseAuthorization();
 
