@@ -6,6 +6,8 @@ public class OptimisationResultResponseDto
 {
     public int Id { get; set; }
     public int ScenarioId { get; set; }
+
+    public int RunId { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime SolvedAt { get; set; }
     public DateTime ReceivedAt { get; set; }

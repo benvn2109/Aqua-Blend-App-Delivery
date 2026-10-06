@@ -28,7 +28,7 @@ public sealed class ChangesControllerTests
     }
 
     [Fact]
-    public async Task GetChanges_ReturnsChangedWaterSourceScenarioAndOptimisationResult()
+    public async Task GetChanges_ReturnsChangedWaterSourceScenarioRunAndOptimisationResult()
     {
         var options = new DbContextOptionsBuilder<AquaBlendDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -56,10 +56,27 @@ public sealed class ChangesControllerTests
 
         await context.SaveChangesAsync();
 
-        var optimisationResult = new OptimisationResult
+        var optimisationRun = new OptimisationRun
         {
             ScenarioId = scenario.Id,
             Scenario = scenario,
+            WorkflowStatus = "solved",
+            SolverStatus = "OPTIMAL",
+            ScenarioSnapshotJson = "{}"
+        };
+
+        context.OptimisationRuns.Add(optimisationRun);
+
+        await context.SaveChangesAsync();
+
+        var optimisationResult = new OptimisationResult
+        {
+            RunId = optimisationRun.Id,
+            Run = optimisationRun,
+
+            // Legacy column left null, so the ScenarioId assertion below can
+            // only pass if the response reads it through the run.
+            ScenarioId = null,
             Status = "OPTIMAL",
             SolvedAt = DateTime.UtcNow,
             ReceivedAt = DateTime.UtcNow,
@@ -86,6 +103,7 @@ public sealed class ChangesControllerTests
 
         Assert.Single(response.WaterSources);
         Assert.Single(response.Scenarios);
+        Assert.Single(response.OptimisationRuns);
         Assert.Single(response.OptimisationResults);
 
         Assert.Equal(
@@ -97,8 +115,28 @@ public sealed class ChangesControllerTests
             response.Scenarios[0].Name);
 
         Assert.Equal(
+            "solved",
+            response.OptimisationRuns[0].WorkflowStatus);
+
+        Assert.Equal(
+            "OPTIMAL",
+            response.OptimisationRuns[0].SolverStatus);
+
+        Assert.Equal(
+            scenario.Id,
+            response.OptimisationRuns[0].ScenarioId);
+
+        Assert.Equal(
             "OPTIMAL",
             response.OptimisationResults[0].Status);
+
+        Assert.Equal(
+            scenario.Id,
+            response.OptimisationResults[0].ScenarioId);
+
+        Assert.Equal(
+            optimisationRun.Id,
+            response.OptimisationResults[0].RunId);
     }
 
     [Fact]
@@ -160,6 +198,71 @@ public sealed class ChangesControllerTests
     }
 
     [Fact]
+    public async Task GetChanges_RunUpdatedAfterSince_IsReturnedViaUpdatedAtClause()
+    {
+        var options = new DbContextOptionsBuilder<AquaBlendDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var context = new AquaBlendDbContext(options);
+
+        var scenario = new Scenario
+        {
+            Name = "Run Status Scenario",
+            Description = "Scenario used for run polling test"
+        };
+
+        context.Scenarios.Add(scenario);
+        await context.SaveChangesAsync();
+
+        var optimisationRun = new OptimisationRun
+        {
+            ScenarioId = scenario.Id,
+            Scenario = scenario,
+            WorkflowStatus = "queued",
+            ScenarioSnapshotJson = "{}"
+        };
+
+        context.OptimisationRuns.Add(optimisationRun);
+
+        await context.SaveChangesAsync();
+        await Task.Delay(50);
+
+        var since = DateTime.UtcNow;
+
+        await Task.Delay(50);
+
+        optimisationRun.WorkflowStatus = "solving";
+
+        await context.SaveChangesAsync();
+
+        var controller = new ChangesController(context);
+
+        var result = await controller.GetChanges(
+            since.ToString("O"),
+            CancellationToken.None);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+
+        var response =
+            Assert.IsType<ChangesResponseDto>(okResult.Value);
+
+        var returned = Assert.Single(response.OptimisationRuns);
+
+        // The run existed before the threshold, so it should only be
+        // returned because UpdatedAt changed after `since`.
+        Assert.True(returned.CreatedAt <= since);
+
+        Assert.Equal(
+            "solving",
+            returned.WorkflowStatus);
+
+        Assert.Equal(
+            scenario.Id,
+            returned.ScenarioId);
+    }
+
+    [Fact]
     public async Task GetChanges_NoChanges_ReturnsEmptyCollections()
     {
         var options = new DbContextOptionsBuilder<AquaBlendDbContext>()
@@ -167,6 +270,33 @@ public sealed class ChangesControllerTests
             .Options;
 
         await using var context = new AquaBlendDbContext(options);
+
+        // One of each entity, all created before `since`. Without existing
+        // rows the Assert.Empty checks below would pass even if the filters
+        // were deleted, because there would be nothing to filter out.
+        var scenario = new Scenario
+        {
+            Name = "Unchanged Scenario",
+            Description = "Created before the since threshold"
+        };
+        context.WaterSources.Add(new WaterSource { Name = "Unchanged Source", Type = "reservoir" });
+        context.Scenarios.Add(scenario);
+        await context.SaveChangesAsync();
+
+        var run = new OptimisationRun { ScenarioId = scenario.Id, WorkflowStatus = "queued" };
+        context.OptimisationRuns.Add(run);
+        await context.SaveChangesAsync();
+
+        context.OptimisationResults.Add(new OptimisationResult
+        {
+            RunId = run.Id,
+            Status = "OPTIMAL",
+            SolvedAt = DateTime.UtcNow,
+            ReceivedAt = DateTime.UtcNow,
+            ContractVersion = "1.0",
+            ResultJson = "{}"
+        });
+        await context.SaveChangesAsync();
 
         var controller = new ChangesController(context);
 
@@ -184,6 +314,7 @@ public sealed class ChangesControllerTests
 
         Assert.Empty(response.WaterSources);
         Assert.Empty(response.Scenarios);
+        Assert.Empty(response.OptimisationRuns);
         Assert.Empty(response.OptimisationResults);
     }
 }

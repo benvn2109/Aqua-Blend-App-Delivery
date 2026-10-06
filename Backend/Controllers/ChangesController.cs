@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Globalization;
 using AquaBlend.Data;
 using AquaBlend.DTOs;
+using AquaBlend.DTOs.Changes;
 using AquaBlend.DTOs.OptimisationResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -57,29 +58,61 @@ public sealed class ChangesController : ControllerBase
         var sinceUtc = parsedSince.UtcDateTime;
         var serverTimestamp = DateTime.UtcNow;
 
+        // Water source changes
         var waterSources = await _context.WaterSources
             .AsNoTracking()
             .Where(w =>
                 w.CreatedAt > sinceUtc ||
-                (w.UpdatedAt.HasValue && w.UpdatedAt.Value > sinceUtc))
+                (w.UpdatedAt.HasValue &&
+                 w.UpdatedAt.Value > sinceUtc))
             .ToListAsync(cancellationToken);
 
+        // Scenario changes
         var scenarios = await _context.Scenarios
             .AsNoTracking()
             .Where(s =>
                 s.CreatedAt > sinceUtc ||
-                (s.UpdatedAt.HasValue && s.UpdatedAt.Value > sinceUtc))
+                (s.UpdatedAt.HasValue &&
+                 s.UpdatedAt.Value > sinceUtc))
             .ToListAsync(cancellationToken);
 
+        // Optimisation run changes
+        // Only lightweight metadata is returned.
+        var optimisationRuns = await _context.OptimisationRuns
+            .AsNoTracking()
+            .Where(r =>
+                r.CreatedAt > sinceUtc ||
+                (r.UpdatedAt.HasValue &&
+                 r.UpdatedAt.Value > sinceUtc))
+            .Select(r => new OptimisationRunSummaryDto
+            {
+                Id = r.Id,
+                ScenarioId = r.ScenarioId,
+                WorkflowStatus = r.WorkflowStatus,
+                SolverStatus = r.SolverStatus,
+                CreatedAt = r.CreatedAt,
+                UpdatedAt = r.UpdatedAt
+            })
+            .ToListAsync(cancellationToken);
+
+        // Optimisation result changes
+        // ResultJson is intentionally excluded from polling responses.
         var optimisationResults = await _context.OptimisationResults
             .AsNoTracking()
             .Where(r =>
                 r.CreatedAt > sinceUtc ||
-                (r.UpdatedAt.HasValue && r.UpdatedAt.Value > sinceUtc))
+                (r.UpdatedAt.HasValue &&
+                 r.UpdatedAt.Value > sinceUtc))
             .Select(r => new OptimisationResultSummaryDto
             {
                 Id = r.Id,
-                ScenarioId = r.ScenarioId ?? 0, // TODO(Prudhvi): temporary during RunId migration (see Sprint 3 plan),
+
+                // ScenarioId on OptimisationResult is now nullable.
+                // Every result belongs to an OptimisationRun,
+                // whose ScenarioId is required.
+                ScenarioId = r.Run.ScenarioId,
+                RunId = r.RunId,
+
                 Status = r.Status,
                 SolvedAt = r.SolvedAt,
                 ReceivedAt = r.ReceivedAt,
@@ -97,6 +130,7 @@ public sealed class ChangesController : ControllerBase
             ServerTimestamp = serverTimestamp,
             WaterSources = waterSources,
             Scenarios = scenarios,
+            OptimisationRuns = optimisationRuns,
             OptimisationResults = optimisationResults
         });
     }
