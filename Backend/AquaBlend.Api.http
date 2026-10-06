@@ -2,6 +2,15 @@
 @AquaBlend.Api_Token = replace-with-a-valid-jwt
 
 ### Health
+
+GET {{AquaBlend.Api_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+### Scenarios
+
+GET {{AquaBlend.Api_HostAddress}}/api/scenarios
 GET {{AquaBlend.Api_HostAddress}}/api/health
 Accept: application/json
 
@@ -65,6 +74,21 @@ POST {{AquaBlend.Api_HostAddress}}/api/scenarios
 Content-Type: application/json
 
 {
+  "name": "Hyderabad Water Plan",
+  "description": "Baseline water allocation scenario",
+  "externalId": "scenario-001",
+  "networkConfig": {
+    "sources": [],
+    "plants": [],
+    "zones": [],
+    "links": [],
+    "overrides": {},
+    "qualityProfile": null
+  }
+}
+
+###
+
   "name": "Sample Scenario",
   "description": "Sample optimisation scenario"
   "name": "Summer Supply Scenario",
@@ -78,6 +102,21 @@ PUT {{AquaBlend.Api_HostAddress}}/api/scenarios/1
 Content-Type: application/json
 
 {
+  "name": "Updated Water Plan",
+  "description": "Updated allocation scenario",
+  "externalId": "scenario-001",
+  "networkConfig": {
+    "sources": [],
+    "plants": [],
+    "zones": [],
+    "links": [],
+    "overrides": {},
+    "qualityProfile": null
+  }
+}
+
+###
+
   "name": "Updated Scenario",
   "description": "Updated optimisation scenario"
   "name": "Updated Summer Scenario",
@@ -90,6 +129,8 @@ Content-Type: application/json
 DELETE {{AquaBlend.Api_HostAddress}}/api/scenarios/1
 
 ###
+
+### Optimisation results
 
 ### Get all optimisation results
 ### Get optimisation results
@@ -110,6 +151,19 @@ Accept: application/json
 
 ###
 
+### Changes
+
+GET {{AquaBlend.Api_HostAddress}}/api/changes
+Accept: application/json
+
+###
+
+### Current user
+
+GET {{AquaBlend.Api_HostAddress}}/api/auth/me
+Accept: application/json
+
+###
 ### Create optimisation result
 ### Planned contract - implementation depends on the Run/Result workflow
 POST {{AquaBlend.Api_HostAddress}}/api/optimisation-results

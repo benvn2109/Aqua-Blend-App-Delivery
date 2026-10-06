@@ -64,6 +64,39 @@ public class ScenarioService
 
         if (dto.NetworkConfig.HasValue)
         {
+            scenario.NetworkConfigJson = dto.NetworkConfig.Value.GetRawText();
+
+    public async Task<ScenarioResponseDto> CreateAsync(CreateScenarioDto dto)
+    {
+        var scenario = new Scenario
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            ExternalId = dto.ExternalId,
+            NetworkConfigJson = dto.NetworkConfig.HasValue
+                ? dto.NetworkConfig.Value.GetRawText()
+                : "{}"
+        };
+
+        _context.Scenarios.Add(scenario);
+        await _context.SaveChangesAsync();
+
+        return MapToResponse(scenario);
+    }
+
+    public async Task<bool> UpdateAsync(int id, UpdateScenarioDto dto)
+    {
+        var scenario = await _context.Scenarios.FindAsync(id);
+
+        if (scenario == null)
+            return false;
+
+        scenario.Name = dto.Name;
+        scenario.Description = dto.Description;
+        scenario.ExternalId = dto.ExternalId;
+
+        if (dto.NetworkConfig.HasValue)
+        {
             var networkConfigJson = dto.NetworkConfig.Value.GetRawText();
 
             // A changed configuration has not been validated, so it must not
