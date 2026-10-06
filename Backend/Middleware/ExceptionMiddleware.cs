@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using AquaBlend.DTOs.Common;
 using AquaBlend.Api.Exceptions;
 using AquaBlend.DTOs.Common;
 using Microsoft.Extensions.Options;
@@ -10,6 +11,13 @@ public sealed class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionMiddleware> _logger;
+
+    public ExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
     public ExceptionMiddleware(
@@ -42,6 +50,7 @@ public sealed class ExceptionMiddleware
                     }
                 });
         }
+        catch (KeyNotFoundException ex)
         catch (ResourceNotFoundException ex)
         {
             await WriteErrorResponseAsync(
@@ -72,6 +81,7 @@ public sealed class ExceptionMiddleware
         }
     }
 
+    private static async Task WriteErrorResponseAsync(
     private async Task WriteErrorResponseAsync(
         HttpContext context,
         int statusCode,
@@ -79,6 +89,7 @@ public sealed class ExceptionMiddleware
         IEnumerable<ApiErrorDetailDto> details)
     {
         if (context.Response.HasStarted)
+            return;
         {
             return;
         }
@@ -95,6 +106,9 @@ public sealed class ExceptionMiddleware
         };
 
         await context.Response.WriteAsync(
+            JsonSerializer.Serialize(response));
+    }
+}
             JsonSerializer.Serialize(response, _jsonOptions));
     }
 }

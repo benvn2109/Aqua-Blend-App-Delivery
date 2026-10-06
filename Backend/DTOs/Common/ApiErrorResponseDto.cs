@@ -3,6 +3,8 @@ namespace AquaBlend.DTOs.Common;
 public sealed class ApiErrorResponseDto
 {
     public int Status { get; init; }
+    public string Error { get; init; } = string.Empty;
+    public IReadOnlyList<ApiErrorDetailDto> Details { get; init; } = Array.Empty<ApiErrorDetailDto>();
 
     public string Error { get; init; } = string.Empty;
 
